@@ -1,0 +1,22 @@
+#!/usr/bin/bash
+
+export PATH=
+
+if [[ "$*" != "-FCronDaemon -odi -oem -oi -t" ]]; then
+	echo "$0 is only meant to be called from cron." >&2
+	exit 1
+fi
+
+umask 066
+
+# Store current stdout and stderr, then redirect both to the log file.
+exec {orig_stdout}>&1 {orig_stderr}>&2 1>>~/cron.log 2>&1
+/usr/bin/flock -x 1
+
+printf '%(%a %d %b %T %Z)T\n' -1
+/usr/bin/cat
+printf '\n'
+
+# Close the descriptors pointing to the log file, and restore stdout and
+# stderr.
+exec 1>&"${orig_stdout}"- 2>&"${orig_stderr}"-
